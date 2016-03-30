@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+
+set -e
+set -o pipefail
+
+export PATH=$PATH:$CRUNCH_SRC:$CRUNCH_SRC/crunch_scripts:$CRUNCH_SRC/crunch_scripts/bin:.
+. <( arv-dax setup )
+
+mntdir=`arv-dax keep`
+
+jobparam=`arv-dax script_parameters`
+
+verbose=`echo "$jobparam" | jq -r '.VERBOSE_FLAG'`
+
+ifn=$mntdir/`echo "$jobparam" | jq -r '.INPUT_SAMPLE'`
+cfg=$mntdir/`echo "$jobparam" | jq -r '.GE_CONFIG'`
+
+if [ "$verbose" == "1" ]
+then
+  echo ">>>>>>>>>>>>>>>> GETEvidenceReport ifn '$ifn', cfg '$cfg'"
+  echo "CORE=$CRUNCH_SRC/crunch_scripts/server $CRUNCH_SRC/crunch_scripts/server/genome_analyzer.py -c $cfg -g $ifn -D ./out-data"
+fi
+
+jq=$CRUNCH_SRC/crunch_scripts/bin/jq
+
+# setup 'virtual' directories needed
+#
+for sfn in `$jq -r '.[]' $cfg`
+do
+  sdir=`dirname $sfn`
+  if [ "$sdir" == "" ]
+  then
+    continue
+  fi
+  ln -s $TASK_KEEPMOUNT/$sdir $sdir
+done
+
+echo ">>>>>>>>>>>>>>>>>>>>> CURRENT DIRECTORY"
+ls -la
+
+
+CORE=$CRUNCH_SRC/crunch_scripts/server $CRUNCH_SRC/crunch_scripts/server/genome_analyzer.py -c $cfg -g $ifn -D ./out-data
+
+# teardown virtual directories
+#
+for sfn in `$jq -r '.[]' $cfg`
+do
+  sdir=`dirname $sfn`
+  if [ "$sdir" == "" ]
+  then
+    continue
+  fi
+  rm $sdir
+done
+
+
+arv-dax task finish
+exit 0
