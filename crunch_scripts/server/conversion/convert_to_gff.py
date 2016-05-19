@@ -9,6 +9,7 @@ import cgivar_to_gff
 import gff_from_23andme
 import gff_from_decodeme
 import gff_from_ftdna
+import gff_from_gfg
 import vcf_to_gff
 
 # A bit of path manipulation to import autozip.py from ../utils/
@@ -34,6 +35,8 @@ def convert(input_file, options=None):
         input_data = gff_from_decodeme.convert(input_file)
     elif input_type == 'FTDNA':
         input_data = gff_from_ftdna.convert(input_file)
+    elif input_type == 'GFG':
+        input_data = gff_from_gfg.convert(input_file)
     else:
         raise Exception("input format not recognized")
 

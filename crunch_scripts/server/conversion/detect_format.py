@@ -42,7 +42,7 @@ def detect_format(file_input):
     for line in f_in:
         line_count += 1
         if any([looks_like[x] for x in looks_like.keys()]):
-            break    
+            break
         if line_count > MAX_LINES_CHECKED:
             break
 
@@ -60,6 +60,9 @@ def detect_format(file_input):
             if re.match(r'##fileformat=VCFv4', line):
                 print "Variant Call Format (VCF) detected"
                 looks_like['VCF'] = True
+            if re.match(r'# Genes for Good v', line):
+                print "Genes for Good format (GFG) detected"
+                looks_like['GFG'] = True
 
         # Look at other lines and decide based on their format.
         tsv_data = line.split('\t')
@@ -80,14 +83,14 @@ def detect_format(file_input):
             print "Family Tree DNA genotyping data (FTDNA) guessed"
             looks_like['FTDNA'] = True
         if ( len(tsv_data) > 3 and
-             re.match(r'rs', tsv_data[0]) and 
+             re.match(r'rs', tsv_data[0]) and
              re.match(r'[0-9]', tsv_data[2]) and
              re.match(r'[ACGT][ACGT]', tsv_data[3]) ):
             print "23andme microarray genotyping data (23ANDME) guessed"
             looks_like['23ANDME'] = True
         if ( len(tsv_data) > 6 and
-             re.match(r'chr', tsv_data[3]) and 
-             re.match(r'[0-9]', tsv_data[4]) and 
+             re.match(r'chr', tsv_data[3]) and
+             re.match(r'[0-9]', tsv_data[4]) and
              re.match(r'[0-9]', tsv_data[5]) and
              (tsv_data[6] == "no-call" or tsv_data[6] == "ref") ):
             print "Complete Genomics var file format (CGIvar) guessed"
@@ -105,6 +108,12 @@ def detect_format(file_input):
              len(tsv_data[7].split(';')) > 2 ):
             print "Variant Call Format (VCF) guessed"
             looks_like['VCF'] = True
+        if ( len(tsv_data) > 3 and
+             re.match(r'(MT|X|Y|[1-9]|1[0-9]|2[012])', tsv_data[1]) and
+             re.match(r'[0-9]+', tsv_data[2]) and
+             re.match(r'[acgtACGT]+', tsv_data[3]) ):
+            print "Genes for Good format (GFG) guessed"
+            looks_like['GFG'] = True
 
     if isinstance(file_input, str):
         f_in.close()
